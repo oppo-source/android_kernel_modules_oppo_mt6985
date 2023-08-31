@@ -1,0 +1,2 @@
+obj-$(CONFIG_OPLUS_FEATURE_KERNEL_NETWORK_PARA) += oplus_networks_tuning.o
+oplus_networks_tuning-objs := oplus_network_tuning.o
