@@ -3142,10 +3142,20 @@ int register_common_touch_device(struct touchpanel_data *pdata)
 
 #elif IS_ENABLED(CONFIG_OPLUS_MTK_DRM_GKI_NOTIFY)
 	ts->disp_notifier.notifier_call = ts_mtk_drm_notifier_callback;
-	if (mtk_disp_notifier_register("Oplus_touch_v2", &ts->disp_notifier)) {
-		TP_INFO(ts->tp_index, "Failed to register disp notifier client!!\n");
-		goto err_check_functionality_failed;
+	if (ts->tp_index == 0) {
+		if (mtk_disp_notifier_register("Oplus_touch_v2", &ts->disp_notifier)) {
+			TP_INFO(ts->tp_index, "Failed to register disp notifier client!!\n");
+			goto err_check_functionality_failed;
+		}
 	}
+#if IS_ENABLED(CONFIG_OPLUS_MTK_DRM_SUB_NOTIFY)
+	if (ts->tp_index == 1) {
+		if (mtk_disp_sub_notifier_register("Oplus_touch_v2", &ts->disp_notifier)) {
+			TP_INFO(ts->tp_index, "Failed to register sub disp notifier client!!\n");
+			goto err_check_functionality_failed;
+		}
+	}
+#endif
 
 #elif IS_ENABLED(CONFIG_DRM_MSM) || IS_ENABLED(CONFIG_DRM_OPLUS_NOTIFY)
 	ts->fb_notif.notifier_call = fb_notifier_callback;
@@ -3380,7 +3390,14 @@ error_fb_notif:
 		panel_event_notifier_unregister(ts->notifier_cookie);
 	}
 #elif IS_ENABLED(CONFIG_OPLUS_MTK_DRM_GKI_NOTIFY)
-	mtk_disp_notifier_unregister(&ts->disp_notifier);
+	if (ts->tp_index == 0) {
+		mtk_disp_notifier_unregister(&ts->disp_notifier);
+	}
+#if IS_ENABLED(CONFIG_OPLUS_MTK_DRM_SUB_NOTIFY)
+	if (ts->tp_index == 1) {
+		mtk_disp_sub_notifier_unregister(&ts->disp_notifier);
+	}
+#endif
 #elif IS_ENABLED(CONFIG_DRM_MSM) || IS_ENABLED(CONFIG_DRM_OPLUS_NOTIFY)
 	msm_drm_unregister_client(&ts->fb_notif);
 #elif IS_ENABLED(CONFIG_FB)
@@ -3475,9 +3492,18 @@ void unregister_common_touch_device(struct touchpanel_data *pdata)
 		panel_event_notifier_unregister(ts->notifier_cookie);
 	}
 #elif IS_ENABLED(CONFIG_OPLUS_MTK_DRM_GKI_NOTIFY)
-	if (ts->disp_notifier.notifier_call) {
-		mtk_disp_notifier_unregister(&ts->disp_notifier);
+	if (ts->tp_index == 0) {
+		if (ts->disp_notifier.notifier_call) {
+			mtk_disp_notifier_unregister(&ts->disp_notifier);
+		}
 	}
+#if IS_ENABLED(CONFIG_OPLUS_MTK_DRM_SUB_NOTIFY)
+	if (ts->tp_index == 1) {
+		if (ts->disp_notifier.notifier_call) {
+			mtk_disp_sub_notifier_unregister(&ts->disp_notifier);
+		}
+	}
+#endif
 #elif IS_ENABLED(CONFIG_DRM_MSM) || IS_ENABLED(CONFIG_DRM_OPLUS_NOTIFY)
 
 	if (ts->fb_notif.notifier_call) {
